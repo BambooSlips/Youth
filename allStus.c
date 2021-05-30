@@ -12,7 +12,7 @@ struct stu_info {
 };
 
 struct stu_info stu[MAXNUMBER];
-int length = 0;
+int length;
 
 void read();
 void write();
@@ -51,6 +51,7 @@ void read()
 	fread(stu, sizeof(struct stu_info), MAXNUMBER, rp);
 
 	//get the length
+	length = 0;
 	while(strncmp(stu[i].stu_num, "", 1) != 0)
 	{
 		length++;
