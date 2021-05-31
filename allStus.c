@@ -15,7 +15,7 @@ struct stu_info stu[MAXNUMBER];
 int length;
 
 void read();
-void write();
+void write(FILE* wp, struct stu_info stu[]);
 int menu();
 void printSpace(char s[], int L);
 void space(int l);
@@ -62,12 +62,12 @@ void read()
 	fclose(rp);
 }
 
-void write()
+void write(FILE* wp, struct stu_info stu[])
 {
-	FILE *wp;
+	//FILE *wp;
 	int i = 0;
-	struct stu_info stu[MAXNUMBER];
-	wp = fopen("stu.info", "a+");   //在文件后附加
+	//struct stu_info stu[MAXNUMBER];
+	//wp = fopen("stu.info", "a+");   //在文件后附加
 	if(wp == 0)
 	{
 		printf("fopen error\n");
@@ -100,6 +100,8 @@ int menu()
 {
 	int option = -1;
 	char number[12]="";
+	FILE *wp;
+	struct stu_info stu[MAXNUMBER];
 	printf("\n\t\t\t\tAll My Students\n");
 	printf("\t\t1: get all records\n");
 	printf("\t\t2: search one record by the student's number\n");
@@ -121,11 +123,14 @@ int menu()
 			search(number);
 			break;
 		case 3:
+			wp = fopen("stu.info", "a+");   //在文件后附加
 			printf("please input the student's information:\n");
-			write();
+			write(wp, stu);
 			break;
 		case 4:
-			printf("please input the student's number that is about to delete:\n");
+			printf("please input the student's number that is about to delete: ");
+			scanf("%s", number);
+			delete(number);
 			break;
 		case 5:
 			printf("bye~\n");
@@ -266,4 +271,24 @@ void search(char number[])
 
 void delete(char number[])
 {
+	int i = 0, j = 0, k = 0;
+	struct stu_info stucpy[length-1];
+	FILE* wp = fopen("stu.info", "w");
+	for(; i < length; i++)
+	{
+		if(strncmp(number, stu[i].stu_num, strlen(stu[i].stu_num)) != 0)
+		{
+			stucpy[j] = stu[i];
+			j++;	
+		}
+	}
+	//更新全局变量
+	memset(stu, 0, sizeof(struct stu_info)*MAXNUMBER);
+	for(; k < j; k++)
+	{
+		stu[k] = stucpy[k];
+	}	
+	fwrite(stucpy, sizeof(struct stu_info), j, wp);
+	fclose(wp);
+	printf("1 record has been successfully deleted!\n");
 }
