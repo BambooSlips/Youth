@@ -11,20 +11,18 @@ struct stu_info {
 	char mobile_phone[12];
 };
 
-struct stu_info stu[MAXNUMBER];
-int length;
+struct stu_info stu[MAXNUMBER];			 //保存全部学生信息
+int length;                                      //stu长度
 
-void read();
-void write(FILE* wp, struct stu_info stu[]);
-int menu();
-void printSpace(char s[], int L);
-void space(int l);
-void printLine(char s[], int L);
-void line(int l);
-int chplace(char s[]);
-void showStudents();
-void search(char number[]);
-void delete(char number[]);
+void read();                                     //读取文件数据并存入stu
+void write(FILE* wp, struct stu_info stu[]);     //将指定学生数据以指定方式写入指定文件
+int menu();					 //菜单
+void printSpace(char s[], int L);		 //计算表格中所需的空格并输出
+void space(int l);				 //输出一定数目的空格
+int chplace(char s[]);				 //计算字符所占空间（优化关于汉字的计算）
+void showStudents();				 //以表格形式显示学生信息
+void search(char number[]);			 //根据学号查询学生信息（支持模糊查询）
+void delete(char number[]);			 //根据学号删除指定学生信息
 
 int main()
 {
@@ -162,24 +160,6 @@ void space(int l)
 	while(l)
 	{
 		printf(" ");
-		l--;
-	}
-}
-
-void printLine(char s[], int L)
-{
-	int l = 0;
-	for(; l < L-strlen(s); l++)
-	{
-		printf("-");
-	}	
-}
-
-void line(int l)
-{
-	while(l)
-	{
-		printf("-");
 		l--;
 	}
 }
