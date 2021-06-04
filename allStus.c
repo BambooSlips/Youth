@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <semaphore.h>
+#include <pthread.h>
 
 #define MAXNUMBER 1000
 
-struct stu_info {
+struct stu_info {                                //学生信息
 	char stu_num[12];
 	char name[10];
 	short int sex;
@@ -13,10 +15,11 @@ struct stu_info {
 
 struct stu_info stu[MAXNUMBER];			 //保存全部学生信息
 int length;                                      //stu长度
+sem_t bin_sem;                                   //信号量
 
-void read();                                     //读取文件数据并存入stu
-void write(FILE* wp, struct stu_info stu[]);     //将指定学生数据以指定方式写入指定文件
-int menu();					 //菜单
+void readInfo();                                 //读取文件数据并存入stu
+void writeInfo(FILE* wp, struct stu_info stu[]); //将指定学生数据以指定方式写入指定文件
+void* menu(void* option);			 //菜单
 void printSpace(char s[], int L);		 //计算表格中所需的空格并输出
 void space(int l);				 //输出一定数目的空格
 int chplace(char s[]);				 //计算字符所占空间（优化关于汉字的计算）
@@ -26,18 +29,50 @@ void delete(char number[]);			 //根据学号删除指定学生信息
 
 int main()
 {
-	//menu();
-	while(menu())   //显示菜单直至退出
+	while(1)
 	{
-		printf("\t\t\t\t\t*\n");
+		int res, option;                 
+		pthread_t a_thread;
+		void* thread_result;
+		struct stu_info stu[MAXNUMBER];
+
+		res=sem_init(&bin_sem,0,0);
+		if(res != 0)
+		{
+			perror("Semaphore initialition failed!\n");
+			exit(EXIT_FAILURE);
+		}
+
+		printf("\n\t\t\t\tAll My Students\n");
+		printf("\t\t1: get all records\n");
+		printf("\t\t2: search one record by the student's number\n");
+		printf("\t\t3: insert one or more records\n");
+		printf("\t\t4: delete one record by the student's number\n");
+		printf("\t\t5: exit\n");
+		printf("\n> please input your choice[1,2,3,4,5]: ");
+		scanf("%d",&option);
+		sem_post(&bin_sem);
+
+		//创建线程并用参数提交选项
+		res = pthread_create(&a_thread,NULL, menu, &option);
+		if(res != 0)
+		{
+			perror("Thread creation failed.\n");
+		}
+
+		res=pthread_join(a_thread, &thread_result);
+		if(res != 0)
+		{
+			perror("Thread join failed!\n");
+		}
+		sem_destroy(&bin_sem);
 	}
 	return 0;
 }
 
-void read()
+void readInfo()
 {
 	FILE *rp;
-	//struct stu_info stu[MAXNUMBER];
 	rp = fopen("stu.info","r");
 	int i = 0;
 
@@ -60,12 +95,9 @@ void read()
 	fclose(rp);
 }
 
-void write(FILE* wp, struct stu_info stu[])
+void writeInfo(FILE* wp, struct stu_info stu[])
 {
-	//FILE *wp;
 	int i = 0;
-	//struct stu_info stu[MAXNUMBER];
-	//wp = fopen("stu.info", "a+");   //在文件后附加
 	if(wp == 0)
 	{
 		printf("fopen error\n");
@@ -76,10 +108,7 @@ void write(FILE* wp, struct stu_info stu[])
 		printf("> number: ");
 		scanf("%s",stu[i].stu_num);
 		if(strncmp(stu[i].stu_num, "end", 3) == 0)
-		{
-			//strcpy(stu[i].stu_num, "end");
 			break;	
-		}
 		printf("> name: ");
 		scanf("%s",stu[i].name);
 		printf("> sex: ");
@@ -94,25 +123,18 @@ void write(FILE* wp, struct stu_info stu[])
 	printf("%d record(s) is(are) successfully written!\n", i);
 }
 
-int menu()
+void* menu(void* option)
 {
-	int option = -1;
+	sem_wait(&bin_sem);
 	char number[12]="";
 	FILE *wp;
 	struct stu_info stu[MAXNUMBER];
-	printf("\n\t\t\t\tAll My Students\n");
-	printf("\t\t1: get all records\n");
-	printf("\t\t2: search one record by the student's number\n");
-	printf("\t\t3: insert one or more records\n");
-	printf("\t\t4: delete one record by the student's number\n");
-	printf("\t\t5: exit\n");
-	printf("\n> please input your choice[1,2,3,4,5]: ");
-	scanf("%d",&option);
-	switch(option)
+	int c = *(int *)option;
+	switch(c)
 	{
 		case 1:
 			printf("Here follow(s) all the record(s):\n");
-			read();
+			readInfo();
 			showStudents();
 			break;
 		case 2:
@@ -123,7 +145,7 @@ int menu()
 		case 3:
 			wp = fopen("stu.info", "a+");   //在文件后附加
 			printf("please input the student's information:\n");
-			write(wp, stu);
+			writeInfo(wp, stu);
 			break;
 		case 4:
 			printf("please input the student's number that is about to delete: ");
@@ -218,7 +240,7 @@ void showStudents()
 void search(char number[])
 {
 	int i = 0, r = 0;
-	read();	
+	readInfo();	
 	printf("Here follows the search result:\n");
 	printf("+-----------------------------------------------------------------------+\n");
 	printf("|\tnumber"); space(6);
